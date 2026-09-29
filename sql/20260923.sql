@@ -1,5 +1,6 @@
 -- Миграционный скрипт
 -- 2026-09-23
+
 drop table if exists military_ranks;
 drop table if exists employees;
 drop table if exists measurment_types;
@@ -19,14 +20,14 @@ comment on column military_ranks.description is 'Описание';
 
 -- Заполняем данные
 insert into military_ranks(id, description)
-values(1,'Рядовой'),(2,'Лейтенант');
+values(1,'Рядовой'), (2, 'Ефрейтор'),(3,'Лейтенант');
 
--- 2. Пользователя
+-- 2. Пользователи
 create table employees
 (
     id integer,
 	name text,
-	birthday timestamp ,
+	birthday timestamp,
 	military_rank_id integer
 );
 
@@ -37,15 +38,15 @@ comment on column employees.birthday is 'Дата рождения';
 comment on column employees.military_rank_id is 'Уникальный код должности';
 
 -- Заполняем данные
-insert into employees(id, name, birthday,military_rank_id )  
-values(1, 'Воловиков Александр Сергеевич','1978-06-24', 2);
+insert into employees(id, name, birthday, military_rank_id)
+values(1, 'Москвин Иван Александрович', '2003-01-24', 2);
 
 -- 3. Устройства для измерения
 create table measurment_types
 (
    id integer,
    short_name  character varying(50),
-   description text 
+   description text
 );
 
 comment on table measurment_types is 'Измерительное оборудование';
@@ -59,7 +60,7 @@ values(1, 'ДМК', 'Десантный метео комплекс'),
 (2,'ВР','Ветровое ружье');
 
 
--- 3. Таблица с параметрами
+-- 4. Таблица с параметрами
 create table measurment_input_params
 (
     id integer,
@@ -77,25 +78,26 @@ comment on column measurment_input_params.measurment_bath_id is 'Уникаль�
 comment on column measurment_input_params.height is 'Высота';
 comment on column measurment_input_params.temperature is 'Температура';
 comment on column measurment_input_params.pressure is 'Давление';
-comment on column measurment_input_params.wind_direction is 'Направление ветка';
+comment on column measurment_input_params.wind_direction is 'Направление ветра';
 comment on column measurment_input_params.wind_speed is 'Скорость ветра';
 
 -- Заполняем данные
-insert into measurment_input_params(id, measurment_bath_id, height, temperature, pressure, wind_direction,wind_speed )
-values(1, 1, 100,12,34,0.2,45);
+insert into measurment_input_params(id, measurment_bath_id, height, temperature, pressure, wind_direction, wind_speed)
+values(1, 1, 220, 18, 745, 315, 6);
 
 
 
--- 4. Таблица с историей
+-- 5. Таблица с историей
 create table measurment_baths
 (
-	id integer ,
+	id integer,
 	emploee_id integer,
 	measurment_type_id integer,
 	started timestamp default now()
 );
 
 comment on table measurment_baths is 'Пачки';
+comment on column measurment_baths.id is 'Уникальный код пачки';
 comment on column measurment_baths.emploee_id is 'Уникальный код пользователя';
 comment on column measurment_baths.measurment_type_id is 'Уникальный код оборудования';
 comment on column measurment_baths.started is 'Дата измерения';
@@ -117,14 +119,5 @@ where
 	and employees.military_rank_id = military_ranks.id
 	   -- Связь пачка - тип оборудования
 	and measurment_types.id = measurment_baths.measurment_type_id
-	   -- Связь пачка - параетры
+	   -- Связь пачка - параметры
 	and measurment_input_params.measurment_bath_id = measurment_baths.id;
-	
-
-
-
-
-
-
-
-
