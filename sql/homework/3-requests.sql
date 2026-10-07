@@ -1,19 +1,16 @@
 -- 1. Каждый пользователь имеет одинаковое количество измерений?
 --    Выводим ФИО и число пачек по каждому пользователю
 select
-	t1.id,
-	t1.name,
-	coalesce(t2.measurment_count, 0)
+    t1.id,
+    t1.name,
+    count(t3.id) as measurment_count
 from employees t1
-left join
-(
-	-- Подзапрос: считаем пачки измерений по пользователям
-	select
-		employee_id,
-		count(*) as measurment_count
-	from measurment_baths
-	group by employee_id
-) as t2 on t1.id = t2.employee_id;
+left join measurment_baths t2
+    on t2.employee_id = t1.id
+left join measurment_input_params t3
+    on t3.measurment_bath_id = t2.id
+group by t1.id, t1.name
+order by t1.id;
 
 
 
