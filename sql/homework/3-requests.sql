@@ -1,19 +1,16 @@
 -- 1. Каждый пользователь имеет одинаковое количество измерений?
 --    Выводим ФИО и число пачек по каждому пользователю
 select
-	t1.id,
-	t1.name,
-	coalesce(t2.measurment_count, 0)
+    t1.id,
+    t1.name,
+    count(t3.id) as measurment_count
 from employees t1
-left join
-(
-	-- Подзапрос: считаем пачки измерений по пользователям
-	select
-		employee_id,
-		count(*) as measurment_count
-	from measurment_baths
-	group by employee_id
-) as t2 on t1.id = t2.employee_id;
+left join measurment_baths t2
+    on t2.employee_id = t1.id
+left join measurment_input_params t3
+    on t3.measurment_bath_id = t2.id
+group by t1.id, t1.name
+order by t1.id;
 
 
 
@@ -52,11 +49,6 @@ where coalesce(t2.params_count, 0) < 5;
 
 
 -- 4. Все значения корректны и в рамках нужного нам диапазона?
---    Диапазоны по ТЗ (_Docs/Artillery/TechnicalTask.md):
---      температура -58..58, давление 500..900, скорость ветра 0..15;
---      направление ветра в таблице хранится в градусах, берем 0..360
---      (по ТЗ в ячейке ввода - большие деления угломера 0..59);
---      высота метеопоста по ТЗ без ограничений, в проверку не входит
 select
 	t1.measurment_bath_id,
 	t3.name as param_name,
