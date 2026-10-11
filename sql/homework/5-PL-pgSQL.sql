@@ -11,6 +11,7 @@ drop table if exists units                       cascade;
 drop table if exists measurement_parameter_types cascade;
 drop table if exists measurement_batchs          cascade;
 drop table if exists measurement_input_params    cascade;
+drop table if exists temperature_corrections     cascade;
 
 -- Счётчики
 create sequence military_positions_seq          start with 1;
@@ -21,6 +22,7 @@ create sequence units_seq                       start with 1;
 create sequence measurement_parameter_types_seq start with 1;
 create sequence measurement_batchs_seq          start with 1;
 create sequence measurement_input_params_seq    start with 1;
+create sequence temperature_corrections_seq     start with 1;
 
 -- 1. Справочник должностей
 create table military_positions
@@ -105,6 +107,16 @@ create table measurement_input_params
 alter sequence measurement_input_params_seq owned by measurement_input_params.id;
 comment on table measurement_input_params is 'Входные параметры измерений';
 
+-- 9. Таблица 1 из ТЗ: виртуальная поправка температуры
+create table temperature_corrections
+(
+    id          integer default nextval('temperature_corrections_seq') not null,
+    temperature numeric(4,1) not null,   -- опорная температура t0
+    correction  numeric(3,1) not null    -- виртуальная поправка dTv
+);
+alter sequence temperature_corrections_seq owned by temperature_corrections.id;
+comment on table temperature_corrections is 'Таблица 1: виртуальная поправка температуры';
+
 commit;
 
 
@@ -136,7 +148,7 @@ insert into units(id, name, base_unit_id, convert_factor) values
     (5, 'Миллиметры ртутного столба',   3,  133.322),
     (6, 'Метр в секунду',               5,  1),
     (7, 'Большое деление угломера',     4,  6),
-    (8, 'Градус',                       4,  1)
+    (8, 'Градус',                       4,  1);
 
 -- Типы параметров:
 -- скорость ветра - только ДМК, дальность сноса пуль - только ВР
@@ -209,6 +221,19 @@ select id, 5, 3 + (id % 9) from measurement_batchs where id between 11 and 20;
 insert into measurement_input_params(measurement_batch_id, measurement_parameter_type_id, measurement_value)
 select id, 6, 10 * (id - 10) from measurement_batchs where id between 11 and 20;
 
+insert into temperature_corrections(id, temperature, correction) values
+    (1, -58,    0),
+    (2, 0,      0),
+    (3, 5,      0.5),
+    (4, 10,     1),
+    (5, 15,     1),
+    (6, 20,     1.5),
+    (7, 25,     2),
+    (8, 30,     3.5),
+    (9, 40,     4.5);
+
+select setval('temperature_corrections_seq', (select max(id) from temperature_corrections));
+
 commit;
 
 
@@ -218,14 +243,15 @@ commit;
 begin;
 
 -- Первичные ключи
-alter table military_positions          add constraint pk_military_positions          primary key (id);
-alter table employees                   add constraint pk_employees                   primary key (id);
-alter table measurement_equipment       add constraint pk_measurement_equipment       primary key (id);
-alter table base_units                  add constraint pk_base_units                  primary key (id);
-alter table units                       add constraint pk_units                       primary key (id);
-alter table measurement_parameter_types add constraint pk_measurement_parameter_types primary key (id);
-alter table measurement_batchs          add constraint pk_measurement_batchs          primary key (id);
-alter table measurement_input_params    add constraint pk_measurement_input_params    primary key (id);
+alter table military_positions          add constraint pk_military_positions            primary key (id);
+alter table employees                   add constraint pk_employees                     primary key (id);
+alter table measurement_equipment       add constraint pk_measurement_equipment         primary key (id);
+alter table base_units                  add constraint pk_base_units                    primary key (id);
+alter table units                       add constraint pk_units                         primary key (id);
+alter table measurement_parameter_types add constraint pk_measurement_parameter_types   primary key (id);
+alter table measurement_batchs          add constraint pk_measurement_batchs            primary key (id);
+alter table measurement_input_params    add constraint pk_measurement_input_params      primary key (id);
+alter table temperature_corrections     add constraint pk_temperature_corrections       primary key (id);
 
 -- Внешние ключи
 alter table employees add constraint fk_employees_position
@@ -269,5 +295,11 @@ alter table measurement_input_params add constraint chk_measurement_value_range 
         else false
     end
 );
+
+alter table temperature_corrections add constraint uq_corrections_temperature unique (temperature);
+alter table temperature_corrections add constraint chk_corrections_temp_range
+    check (temperature between -58 and 58);
+alter table temperature_corrections add constraint chk_corrections_value
+    check (correction >= 0);
 
 commit;
