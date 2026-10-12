@@ -304,5 +304,31 @@ begin
         check (temperature between -58 and 58);
     alter table temperature_corrections add constraint chk_corrections_value
         check (correction >= 0);
+
+    -- Комментарии к ограничениям
+    comment on constraint pk_military_positions             on military_positions           is 'Первичный ключ справочника должностей';
+    comment on constraint pk_employees                      on employees                    is 'Первичный ключ пользователей';
+    comment on constraint pk_measurement_equipment          on measurement_equipment        is 'Первичный ключ оборудования';
+    comment on constraint pk_base_units                     on base_units                   is 'Первичный ключ базовых единиц измерения';
+    comment on constraint pk_units                          on units                        is 'Первичный ключ единиц измерения';
+    comment on constraint pk_measurement_parameter_types    on measurement_parameter_types  is 'Первичный ключ типов параметров';
+    comment on constraint pk_measurement_batchs             on measurement_batchs           is 'Первичный ключ пачек измерений';
+    comment on constraint pk_measurement_input_params       on measurement_input_params     is 'Первичный ключ входных параметров';
+    comment on constraint pk_temperature_corrections        on temperature_corrections      is 'Первичный ключ опорных точек поправки';
+
+    comment on constraint fk_employees_position     on employees                    is 'Связь пользователь - должность';
+    comment on constraint fk_units_base_unit        on units                        is 'Связь единица измерения - базовая единица';
+    comment on constraint fk_param_types_unit       on measurement_parameter_types  is 'Связь тип параметра - единица измерения';
+    comment on constraint fk_param_types_equipment  on measurement_parameter_types  is 'Связь тип параметра - оборудование';
+    comment on constraint fk_batchs_employee        on measurement_batchs           is 'Связь пачка - пользователь';
+    comment on constraint fk_batchs_equipment       on measurement_batchs           is 'Связь пачка - оборудование';
+    comment on constraint fk_params_batch           on measurement_input_params     is 'Связь параметр - пачка';
+    comment on constraint fk_params_type            on measurement_input_params     is 'Связь параметр - тип параметра';
+
+    comment on constraint uq_equipment_short_name       on measurement_equipment    is 'Код оборудования уникален';
+    comment on constraint chk_measurement_value_range   on measurement_input_params is 'Диапазоны входных параметров';
+    comment on constraint uq_corrections_temperature    on temperature_corrections  is 'Опорная температура уникальна';
+    comment on constraint chk_corrections_temp_range    on temperature_corrections  is 'Температура в диапазоне: -58..58 °C';
+    comment on constraint chk_corrections_value         on temperature_corrections  is 'Поправка неотрицательна по таблице 1';
                 
 end $$;
