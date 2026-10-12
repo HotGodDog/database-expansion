@@ -234,7 +234,7 @@ begin
         (8, 30,     3.5),
         (9, 40,     4.5);
 
-    select setval('temperature_corrections_seq', (select max(id) from temperature_corrections));
+    perform setval('temperature_corrections_seq', (select max(id) from temperature_corrections));
 
 end $$;
 
