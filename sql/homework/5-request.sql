@@ -9,8 +9,8 @@ from
         table_name as "Наименование",
         'Таблица'  as "Тип"
     from information_schema.tables
-    where table_schema = 'public'
-    	and table_type   = 'BASE TABLE'
+    where table_schema  = 'public'
+      and table_catalog = current_database()
 
     union all
 
@@ -19,7 +19,8 @@ from
         sequence_name as "Наименование",
         'Счётчик'     as "Тип"
     from information_schema.sequences
-    where sequence_schema = 'public'
+    where sequence_schema  = 'public'
+      and sequence_catalog = current_database()
 
     union all
 
@@ -33,7 +34,7 @@ from
             when 'UNIQUE'      then 'Ограничение (уникальность)'
         end as "Тип"
     from information_schema.table_constraints
-    where table_schema = 'public'
-  		and constraint_name not like '%not_null'
+    where table_schema      = 'public'
+      and table_catalog     = current_database()
 ) as t
 order by t."Тип", t."Наименование";
