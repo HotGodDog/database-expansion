@@ -158,6 +158,8 @@ begin
         comment on column   temperature_corrections.temperature is 'Опорная температура t0, °C';
         comment on column   temperature_corrections.correction  is 'Виртуальная поправка dTv, °C';
 
+    exception when others then
+        raise notice 'Транзакция 1 откачена';
     end;
 
 
@@ -275,6 +277,8 @@ begin
 
         perform setval('temperature_corrections_seq', (select max(id) from temperature_corrections));
 
+    exception when others then
+        raise notice 'Транзакция 2 откачена';
     end;
 
 
@@ -369,6 +373,8 @@ begin
         comment on constraint chk_corrections_temp_range    on temperature_corrections  is 'Температура в диапазоне: -58..58 °C';
         comment on constraint chk_corrections_value         on temperature_corrections  is 'Поправка неотрицательна по таблице 1';
 
+    exception when others then
+        raise notice 'Транзакция 3 откачена';
     end;
 
 end $$;
