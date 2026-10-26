@@ -26,18 +26,16 @@ with
             bp.wind_direction,
             bp.wind_speed,
             bp.bullet_drift,
-            pc.name as error_name,
-            pc.description as error_description
+            parmeters_checking(
+                row(
+                    mb.measurement_equipment_id,
+                    bp.height, bp.temperature, bp.pressure,
+                    bp.wind_direction, bp.wind_speed, bp.bullet_drift
+                )::parameters_list_type
+            ) as error_description
         from batch_params as bp
         join measurement_batchs as mb
             on mb.id = bp.measurement_batch_id
-        left join lateral parmeters_checking(
-            row(
-                mb.measurement_equipment_id,
-                bp.height, bp.temperature, bp.pressure,
-                bp.wind_direction, bp.wind_speed, bp.bullet_drift
-            )::parameters_list_type
-        ) as pc on true
     )
 
     -- Объединяем ошибки одной пачки измерений в одну строку
@@ -46,7 +44,7 @@ with
         measurement_equipment_id,
         height, temperature, pressure,
         wind_direction, wind_speed, bullet_drift,
-        case when count(error_name) = 0 then 'Нет ошибки'
+        case when count(error_description) = 0 then 'Нет ошибки'
             else 'Есть ошибка'
         end as error_flag,
         coalesce(string_agg(error_description, '; '), '') as error_descriptions
@@ -87,32 +85,36 @@ with
             bp.wind_direction,
             bp.wind_speed,
             bp.bullet_drift,
-            pc.name as error_name,
-            pc.description as error_description
+            parmeters_checking(
+                row(
+                    mb.measurement_equipment_id,
+                    bp.height, bp.temperature, bp.pressure,
+                    bp.wind_direction, bp.wind_speed, bp.bullet_drift
+                )::parameters_list_type
+            ) as error_description
         from batch_params as bp
         join measurement_batchs as mb
             on mb.id = bp.measurement_batch_id
-        left join lateral parmeters_checking(
-            row(
-                mb.measurement_equipment_id,
-                bp.height, bp.temperature, bp.pressure,
-                bp.wind_direction, bp.wind_speed, bp.bullet_drift
-            )::parameters_list_type
-        ) as pc on true
     )
 
     -- Находим лучшего стрелка
     select
         e.id as employee_id,
         e.name as employee_name,
-        count(vr.error_name) as errors_count
+        sum(
+            case
+                when vr.error_description is null then 0
+                else char_length(vr.error_description)
+                     - char_length(replace(vr.error_description, ';', '')) + 1
+            end
+        ) as errors_count
     from employees as e
     left join measurement_batchs as mb
         on mb.employee_id = e.id
     left join validation_results as vr
         on vr.measurement_batch_id = mb.id
     group by e.id, e.name
-    order by errors_count, e.name;
+    order by errors_count, e.name;    
 
 
 
