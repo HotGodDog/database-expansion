@@ -125,12 +125,13 @@ begin
 
     begin
         create or replace function parmeters_checking(params parameters_list_type)
-            returns setof errors_types
+            returns text
             language 'plpgsql'
         as $BODY$
+        declare
+            v_errors text;
         begin
 
-            return query
             with error_checks as 
             (
                 select 1 as error_type_id, (
@@ -180,10 +181,12 @@ begin
                         or params.bullet_drift > 150)
                 )        
             )
-            select et.id, et.name, et.description
+            select string_agg(et.description, '; ') into v_errors
             from error_checks as ec
             join errors_types as et on et.id = ec.error_type_id
             where ec.has_error;
+
+            return v_errors;
 
         end;
         $BODY$;
